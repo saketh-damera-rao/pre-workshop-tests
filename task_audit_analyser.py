@@ -207,7 +207,18 @@ def load_and_prepare(uploaded_file):
     df["Time per week (hrs)"] = pd.to_numeric(df["Time per week (hrs)"], errors="coerce").fillna(2.0)
     df["Manual effort (1-5)"] = pd.to_numeric(df["Manual effort (1-5)"], errors="coerce").fillna(3.0)
     df["_opportunity"]        = (df["Manual effort (1-5)"] * df["Time per week (hrs)"]).round(2)
-    df["_color"]              = df["Role"].map(ROLE_COLORS).fillna(DEFAULT_COLOR)
+    # Assign colors dynamically: use ROLE_COLORS for known roles, cycle through palette for others
+    palette = ["#2563eb","#7c3aed","#0891b2","#d97706","#059669","#dc2626","#64748b"]
+    unique_roles = df["Role"].unique()
+    role_color_map = {}
+    extra_idx = 0
+    for r in unique_roles:
+        if r in ROLE_COLORS:
+            role_color_map[r] = ROLE_COLORS[r]
+        else:
+            role_color_map[r] = palette[extra_idx % len(palette)]
+            extra_idx += 1
+    df["_color"] = df["Role"].map(role_color_map)
 
     return df, fmt, None
 
@@ -247,7 +258,11 @@ with st.sidebar:
     if st.button("Load sample data", use_container_width=True):
         df_s = SAMPLE_DATA.copy()
         df_s["_opportunity"] = (df_s["Manual effort (1-5)"] * df_s["Time per week (hrs)"]).round(2)
-        df_s["_color"]       = df_s["Role"].map(ROLE_COLORS).fillna(DEFAULT_COLOR)
+        palette_s = ["#2563eb","#7c3aed","#0891b2","#d97706","#059669","#dc2626","#64748b"]
+        rcm_s = {}; ei = 0
+        for r in df_s["Role"].unique():
+            rcm_s[r] = ROLE_COLORS.get(r, palette_s[ei % len(palette_s)]); ei += (0 if r in ROLE_COLORS else 1)
+        df_s["_color"] = df_s["Role"].map(rcm_s)
         st.session_state.df  = df_s
         st.session_state.fmt = "standard"
         st.rerun()
@@ -337,7 +352,9 @@ with tab1:
         fig.add_trace(go.Scatter(
             x=sub["Manual effort (1-5)"], y=sub["Time per week (hrs)"],
             mode="markers",
-            marker=dict(size=sub["_opportunity"]*1.8+8, color=get_color(role),
+            max_opp = df["_opportunity"].max() if df["_opportunity"].max() > 0 else 1
+            norm_size = (sub["_opportunity"] / max_opp * 50 + 10)
+            marker=dict(size=norm_size, color=role_color_map.get(role, DEFAULT_COLOR),
                         opacity=0.8, line=dict(width=1.5,color="white")),
             name=role,
             customdata=sub[["Task","Name","_opportunity"]].values,
@@ -378,7 +395,7 @@ with tab2:
                      tasks=("Task","count"))
                 .reset_index()
                 .sort_values("total_hours",ascending=True))
-    role_sum["_color"] = role_sum["Role"].apply(get_color)
+    role_sum["_color"] = role_sum["Role"].map(role_color_map).fillna(DEFAULT_COLOR)
     fig2 = go.Figure(go.Bar(
         x=role_sum["total_hours"], y=role_sum["Role"], orientation="h",
         marker=dict(color=role_sum["_color"],opacity=0.85),
