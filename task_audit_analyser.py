@@ -265,6 +265,11 @@ with st.sidebar:
         df_s["_color"] = df_s["Role"].map(rcm_s)
         st.session_state.df  = df_s
         st.session_state.fmt = "standard"
+        palette_s = ["#2563eb","#7c3aed","#0891b2","#d97706","#059669","#dc2626","#64748b"]
+        rcm_s2 = {}; ei2 = 0
+        for r in df_s["Role"].unique():
+            rcm_s2[r] = ROLE_COLORS.get(r, palette_s[ei2 % len(palette_s)]); ei2 += (0 if r in ROLE_COLORS else 1)
+        st.session_state.role_color_map = rcm_s2
         st.rerun()
     if "df" in st.session_state:
         if st.button("Clear data", use_container_width=True):
@@ -287,6 +292,11 @@ if "df" not in st.session_state:
         else:
             st.session_state.df  = df
             st.session_state.fmt = fmt
+            palette = ["#2563eb","#7c3aed","#0891b2","#d97706","#059669","#dc2626","#64748b"]
+            rcm = {}; ei = 0
+            for r in df["Role"].unique():
+                rcm[r] = ROLE_COLORS.get(r, palette[ei % len(palette)]); ei += (0 if r in ROLE_COLORS else 1)
+            st.session_state.role_color_map = rcm
             st.rerun()
     else:
         st.markdown("""
@@ -301,6 +311,7 @@ if "df" not in st.session_state:
 
 df  = st.session_state.df.copy()
 fmt = st.session_state.fmt
+role_color_map = st.session_state.get("role_color_map", {r: ROLE_COLORS.get(r, DEFAULT_COLOR) for r in df["Role"].unique()})
 
 # ── FORMAT BADGE ──────────────────────────────────────────────────────────────
 badge_label = "Google Forms CSV detected" if fmt == "google_form" else "Standard CSV detected"
