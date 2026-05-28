@@ -225,6 +225,9 @@ def load_and_prepare(uploaded_file):
 def get_color(role):
     return ROLE_COLORS.get(role, DEFAULT_COLOR)
 
+def dyn_color(role, rcm):
+    return rcm.get(role, DEFAULT_COLOR)
+
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### About")
@@ -311,7 +314,10 @@ if "df" not in st.session_state:
 
 df  = st.session_state.df.copy()
 fmt = st.session_state.fmt
-role_color_map = st.session_state.get("role_color_map", {r: ROLE_COLORS.get(r, DEFAULT_COLOR) for r in df["Role"].unique()})
+PALETTE = ["#2563eb","#7c3aed","#0891b2","#d97706","#059669","#dc2626","#e11d48","#0284c7"]
+role_color_map = {}
+for _i, _r in enumerate(df["Role"].unique()):
+    role_color_map[_r] = ROLE_COLORS.get(_r, PALETTE[_i % len(PALETTE)])
 
 # ── FORMAT BADGE ──────────────────────────────────────────────────────────────
 badge_label = "Google Forms CSV detected" if fmt == "google_form" else "Standard CSV detected"
@@ -435,7 +441,7 @@ with tab3:
     max_s  = df["_opportunity"].max()
     for i,(_,row) in enumerate(top_df.iterrows()):
         color = colors[i % len(colors)]
-        rc    = get_color(row["Role"])
+        rc    = role_color_map.get(row["Role"], DEFAULT_COLOR)
         pct   = round(row["_opportunity"]/max_s*100)
         st.markdown(f"""
         <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;
