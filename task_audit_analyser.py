@@ -349,11 +349,11 @@ with tab1:
     fig = go.Figure()
     for role in roles:
         sub = df[df["Role"]==role]
+        max_opp = df["_opportunity"].max() if df["_opportunity"].max() > 0 else 1
+        norm_size = (sub["_opportunity"] / max_opp * 50 + 10)
         fig.add_trace(go.Scatter(
             x=sub["Manual effort (1-5)"], y=sub["Time per week (hrs)"],
             mode="markers",
-            max_opp = df["_opportunity"].max() if df["_opportunity"].max() > 0 else 1
-            norm_size = (sub["_opportunity"] / max_opp * 50 + 10)
             marker=dict(size=norm_size, color=role_color_map.get(role, DEFAULT_COLOR),
                         opacity=0.8, line=dict(width=1.5,color="white")),
             name=role,
