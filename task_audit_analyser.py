@@ -293,11 +293,13 @@ badge_class = "badge-gform"              if fmt == "google_form" else "badge-sta
 st.markdown(f'<span class="format-badge {badge_class}">{badge_label}</span>', unsafe_allow_html=True)
 
 # ── SUMMARY STATS ─────────────────────────────────────────────────────────────
+avg_hrs_per_person = df.groupby("Name")["Time per week (hrs)"].mean()
+avg_hrs_overall    = round(avg_hrs_per_person.mean(), 1)
 c1,c2,c3,c4 = st.columns(4)
 for col,num,lbl in [
     (c1, df["Name"].nunique(),               "Participants"),
     (c2, len(df),                            "Tasks logged"),
-    (c3, f"{df['Time per week (hrs)'].sum():.0f}h", "Total hrs/week"),
+    (c3, f"{avg_hrs_overall}h",              "Avg hrs per task per person"),
     (c4, f"{df['Manual effort (1-5)'].mean():.1f}/5","Avg manual effort"),
 ]:
     with col:
