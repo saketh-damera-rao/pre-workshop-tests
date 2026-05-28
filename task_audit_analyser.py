@@ -184,16 +184,19 @@ def normalise_long(df):
 # ── LOAD AND PREPARE ──────────────────────────────────────────────────────────
 def load_and_prepare(uploaded_file):
     df_raw = pd.read_csv(uploaded_file)
-    df_raw = df_raw.loc[:, ~df_raw.columns.str.lower().str.contains("timestamp")]
 
     if is_actual_google_form(df_raw):
+        # Pass raw df WITH timestamp so column positions match the form structure
+        # reshape_actual_form uses positional indexing: col 0=Timestamp, 1=Name, 2=Job title
         df  = reshape_actual_form(df_raw)
         fmt = "google_form"
     elif is_generic_google_form(df_raw):
-        df  = reshape_generic_form(df_raw)
+        df_clean = df_raw.loc[:, ~df_raw.columns.str.lower().str.contains("timestamp")]
+        df  = reshape_generic_form(df_clean)
         fmt = "google_form"
     else:
-        df  = normalise_long(df_raw)
+        df_clean = df_raw.loc[:, ~df_raw.columns.str.lower().str.contains("timestamp")]
+        df  = normalise_long(df_clean)
         fmt = "standard"
 
     required = ["Name","Role","Task","Time per week (hrs)","Manual effort (1-5)"]
